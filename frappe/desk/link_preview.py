@@ -10,7 +10,7 @@ def get_preview_data(doctype, docname):
 		return
 
 	preview_fields = [
-		field.fieldname
+		field
 		for field in meta.fields
 		if field.in_preview
 		and field.fieldtype not in no_value_fields
@@ -20,14 +20,26 @@ def get_preview_data(doctype, docname):
 	# no preview fields defined, build list from mandatory fields
 	if not preview_fields:
 		preview_fields = [
-			field.fieldname for field in meta.fields if field.reqd and field.fieldtype not in table_fields
+			field for field in meta.fields if field.reqd and field.fieldtype not in table_fields
 		]
 
-	title_field = meta.get_title_field()
-	image_field = meta.image_field
+	# resolve link title fields
+	for index, field in enumerate(preview_fields):
+		fieldname = field.fieldname
+		if field.fieldtype == "Link":
+			link_meta = frappe.get_meta(field.options)
+			if link_meta.show_title_field_in_link:
+				fieldname = ".".join([fieldname, link_meta.title_field])
+		preview_fields[index] = fieldname
 
-	preview_fields.append(title_field)
-	preview_fields.append(image_field)
+	title_field = meta.get_title_field()
+	if title_field:
+		preview_fields.append(title_field)
+
+	image_field = meta.image_field
+	if image_field:
+		preview_fields.append(image_field)
+
 	preview_fields.append("name")
 
 	preview_data = frappe.get_list(doctype, filters={"name": docname}, fields=preview_fields, limit=1)
@@ -36,6 +48,11 @@ def get_preview_data(doctype, docname):
 		return
 
 	preview_data = preview_data[0]
+
+	# map titles to original link fields
+	for fieldname, title_fieldname in [fieldname.split(".") for fieldname in preview_fields if "." in fieldname]:
+		preview_data[fieldname] = preview_data[title_fieldname]
+		del preview_data[title_fieldname]
 
 	formatted_preview_data = {
 		"preview_image": preview_data.get(image_field),

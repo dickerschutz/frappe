@@ -745,7 +745,7 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 
 		const format = () => {
 			if (df.fieldtype === "Code") {
-				return value;
+				return value_display;
 			} else if (df.fieldtype === "Percent") {
 				return `<div class="progress" style="margin: 0px;">
 						<div class="progress-bar progress-bar-success" role="progressbar"
@@ -754,7 +754,7 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 						</div>
 					</div>`;
 			} else {
-				return frappe.format(value, df, null, doc);
+				return frappe.format(value_display, df, null, doc);
 			}
 		};
 

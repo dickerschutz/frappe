@@ -8,22 +8,15 @@ frappe.pages['print'].on_page_load = function(wrapper) {
 	$(wrapper).bind('show', () => {
 		const route = frappe.get_route();
 		const doctype = route[1];
-		const docname = route.slice(2).join("/");
-		if (!frappe.route_options || !frappe.route_options.frm) {
-			frappe.model.with_doc(doctype, docname, () => {
-				let frm = { doctype: doctype, docname: docname };
-				frm.doc = frappe.get_doc(doctype, docname);
-				frappe.model.with_doctype(doctype, () => {
-					frm.meta = frappe.get_meta(route[1]);
-					print_view.show(frm);
-				});
+		const docname = route[2];
+		frappe.model.with_doc(doctype, docname, () => {
+			let frm = { doctype: doctype, docname: docname };
+			frm.doc = frappe.get_doc(doctype, docname);
+			frappe.model.with_doctype(doctype, () => {
+				frm.meta = frappe.get_meta(route[1]);
+				print_view.show(frm);
 			});
-		} else {
-			print_view.frm = frappe.route_options.frm.doctype ?
-				frappe.route_options.frm : frappe.route_options.frm.frm;
-			frappe.route_options.frm = null;
-			print_view.show(print_view.frm);
-		}
+		});
 	});
 };
 
@@ -289,14 +282,14 @@ frappe.ui.form.PrintView = class {
 				},
 			],
 			(data) => {
-				frappe.route_options = {
+				const route_options = {
 					make_new: true,
 					doctype: this.frm.doctype,
 					name: data.print_format_name,
 					based_on: data.based_on,
 					beta: data.beta
 				};
-				frappe.set_route('print-format-builder');
+				frappe.set_route('print-format-builder', route_options);
 				this.print_sel.val(data.print_format_name);
 			},
 			__('New Custom Print Format'),
@@ -343,13 +336,13 @@ frappe.ui.form.PrintView = class {
 					},
 				],
 				(data) => {
-					frappe.route_options = {
+					const route_options = {
 						make_new: true,
 						doctype: this.frm.doctype,
 						name: data.print_format_name,
 						based_on: data.based_on,
 					};
-					frappe.set_route('print-format-builder');
+					frappe.set_route('print-format-builder', route_options);
 				},
 				__('New Custom Print Format'),
 				__('Start')

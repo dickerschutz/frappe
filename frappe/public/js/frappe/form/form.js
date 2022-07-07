@@ -1118,9 +1118,6 @@ frappe.ui.form.Form = class FrappeForm {
 	// ACTIONS
 
 	print_doc() {
-		frappe.route_options = {
-			frm: this,
-		};
 		frappe.set_route('print', this.doctype, this.doc.name);
 	}
 
@@ -1128,7 +1125,7 @@ frappe.ui.form.Form = class FrappeForm {
 		let filters, sort_field, sort_order;
 		let list_view = frappe.get_list_view(this.doctype);
 		if (list_view) {
-			filters = list_view.get_filters_for_args();
+			filters = list_view.filters;
 			sort_field = list_view.sort_by;
 			sort_order = list_view.sort_order;
 		} else {
@@ -1719,8 +1716,7 @@ frappe.ui.form.Form = class FrappeForm {
 				// set link fields (if found)
 				me.set_link_field(doctype, new_doc);
 
-				frappe.ui.form.make_quick_entry(doctype, null, null, new_doc);
-				// frappe.set_route('Form', doctype, new_doc.name);
+				frappe.ui.form.make_quick_entry(doctype, new_doc);
 			});
 		}
 	}

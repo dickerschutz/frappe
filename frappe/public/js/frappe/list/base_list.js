@@ -17,9 +17,11 @@ frappe.views.BaseList = class BaseList {
 		]);
 	}
 
-	init() {
-		if (this.init_promise) return this.init_promise;
+	teardown() {
 
+	}
+
+	init() {
 		let tasks = [
 			this.setup_defaults,
 			this.set_stats,
@@ -32,29 +34,34 @@ frappe.views.BaseList = class BaseList {
 			this.setup_view_menu,
 		].map((fn) => fn.bind(this));
 
-		this.init_promise = frappe.run_serially(tasks);
-		return this.init_promise;
+		return frappe.run_serially(tasks);
+	}
+
+	load_settings() {
+		return frappe.listview_settings[this.doctype] || {};
 	}
 
 	setup_defaults() {
 		this.page_name = frappe.get_route_str();
 		this.page_title = this.page_title || frappe.router.doctype_layout || __(this.doctype);
 		this.meta = frappe.get_meta(this.doctype);
-		this.settings = frappe.listview_settings[this.doctype] || {};
-		this.user_settings = frappe.get_user_settings(this.doctype);
+		this.settings = this.load_settings();
+		if (this.settings.init) {
+			this.settings.init();
+		}
 
-		this.start = 0;
-		this.page_length = 20;
 		this.data = [];
 		this.method = "frappe.desk.reportview.get";
-
 		this.can_create = frappe.model.can_create(this.doctype);
 		this.can_write = frappe.model.can_write(this.doctype);
 
-		this.fields = [];
-		this.filters = [];
-		this.sort_by = "modified";
-		this.sort_order = "desc";
+		const filter_arg = (k, v) => v !== undefined
+
+		Object.assign(this, {
+			...frappe.utils.filter_object(this.get_default_args(), filter_arg),
+			...frappe.utils.filter_object(this.get_settings_args(), filter_arg),
+			...frappe.utils.filter_object(this.get_route_options_args(), filter_arg)
+		});
 
 		// Setup buttons
 		this.primary_action = null;
@@ -69,8 +76,74 @@ frappe.views.BaseList = class BaseList {
 		];
 	}
 
-	async setup_fields() {
-		await this.set_fields();
+	get_route_options_args() {
+		const filters = frappe.route_options.filters ? Object.entries(frappe.route_options.filters).reduce((acc, [field, value]) => {
+			let doctype = null;
+
+			// if `Child DocType.fieldname`
+			if (field.includes(".")) {
+				doctype = field.split(".")[0];
+				field = field.split(".")[1];
+			}
+
+			// find the table in which the key exists
+			// for example the filter could be {"item_code": "X"}
+			// where item_code is in the child table.
+
+			// we can search all tables for mapping the doctype
+			if (!doctype) {
+				doctype = frappe.meta.get_doctype_for_field(
+					this.doctype,
+					field
+				);
+			}
+
+			if (doctype) {
+				if ($.isArray(value)) {
+					acc.push([doctype, field, value[0], value[1]]);
+				} else {
+					acc.push([doctype, field, "=", value]);
+				}
+			}
+			return acc
+		}, []) : undefined;
+
+		const sort_by = frappe.route_options.sort_by || undefined;
+		const sort_order = frappe.route_options.sort_order || undefined;
+
+		return {
+			filters,
+			sort_by,
+			sort_order
+		}
+	}
+
+	get_settings_args() {
+		return {
+			filters: this.settings.filters ? this.settings.filters.map((f) => {
+				if (f.length === 3) {
+					f = [this.doctype, f[0], f[1], f[2]];
+				}
+				return f;
+			}) : undefined,
+			sort_by:  this.settings.sort_by || undefined,
+			sort_order: this.settings.sort_order || undefined,
+		}
+	}
+
+	get_default_args() {
+		return {
+			start: 0,
+			page_length: 20,
+			fields: [],
+			filters: [],
+			sort_by:  "modified",
+			sort_order: "desc"
+		}
+	}
+
+	setup_fields() {
+		this.set_fields();
 		this.build_fields();
 	}
 
@@ -312,7 +385,6 @@ frappe.views.BaseList = class BaseList {
 	setup_filter_area() {
 		if (this.hide_filters) return;
 		this.filter_area = new FilterArea(this);
-
 		if (this.filters && this.filters.length > 0) {
 			return this.filter_area.set(this.filters);
 		}
@@ -329,10 +401,6 @@ frappe.views.BaseList = class BaseList {
 			},
 			onchange: this.on_sort_change.bind(this),
 		});
-	}
-
-	on_sort_change() {
-		this.refresh();
 	}
 
 	setup_result_area() {
@@ -379,6 +447,7 @@ frappe.views.BaseList = class BaseList {
 				</div>
 			</div>`
 		).hide();
+
 		this.$frappe_list.append(this.$paging_area);
 
 		// set default paging btn active
@@ -424,7 +493,7 @@ frappe.views.BaseList = class BaseList {
 	}
 
 	get_filter_value(fieldname) {
-		const filter = this.get_filters_for_args().filter(f => f[1] == fieldname)[0];
+		const filter = this.filters.filter(f => f[1] == fieldname)[0];
 		if (!filter) return;
 		return {
 			'like': filter[3]?.replace(/^%?|%$/g, ''),
@@ -432,19 +501,11 @@ frappe.views.BaseList = class BaseList {
 		}[filter[2]] || filter[3];
 	}
 
-	get_filters_for_args() {
-		// filters might have a fifth param called hidden,
-		// we don't want to pass that server side
-		return this.filter_area
-			? this.filter_area.get().map((filter) => filter.slice(0, 4))
-			: [];
-	}
-
 	get_args() {
 		return {
 			doctype: this.doctype,
 			fields: this.get_fields(),
-			filters: this.get_filters_for_args(),
+			filters: this.filters,
 			order_by: this.sort_selector && this.sort_selector.get_sql_string(),
 			start: this.start,
 			page_length: this.page_length,
@@ -469,14 +530,9 @@ frappe.views.BaseList = class BaseList {
 	}
 
 	refresh() {
-		let args = this.get_call_args();
-		if (this.no_change(args)) {
-			// console.log('throttled');
-			return Promise.resolve();
-		}
 		this.freeze(true);
 		// fetch data from server
-		return frappe.call(args).then((r) => {
+		return frappe.call(this.get_call_args()).then((r) => {
 			// render
 			this.prepare_data(r);
 			this.toggle_result_area();
@@ -485,24 +541,10 @@ frappe.views.BaseList = class BaseList {
 			this.after_render();
 			this.freeze(false);
 			this.reset_defaults();
-			if (this.settings.refresh) {
-				this.settings.refresh(this);
-			}
+			if (this.settings.refresh) this.settings.refresh(this);
 		});
 	}
 
-	no_change(args) {
-		// returns true if arguments are same for the last 3 seconds
-		// this helps in throttling if called from various sources
-		if (this.last_args && JSON.stringify(args) === this.last_args) {
-			return true;
-		}
-		this.last_args = JSON.stringify(args);
-		setTimeout(() => {
-			this.last_args = null;
-		}, 3000);
-		return false;
-	}
 
 	prepare_data(r) {
 		let data = r.message || {};
@@ -534,22 +576,46 @@ frappe.views.BaseList = class BaseList {
 	}
 
 	before_render() {}
-
 	after_render() {}
+	render() {}
 
-	render() {
-		// for child classes
+	resolve_route_options() {
+		return {
+			filters: this.filters.reduce((acc, [doctype, field, op, value]) => {
+				field = doctype !== this.doctype ? `${doctype}.${field}` : field
+				acc[field] = op === '=' ? value : [op, value]
+				return acc
+			}, {}),
+			sort_by: this.sort_by,
+			sort_order: this.sort_order,
+		}
 	}
 
-	on_filter_change() {
-		// fired when filters are added or removed
+	update_route_options() {
+		frappe.router.replace_route_options({
+			...frappe.route_options,
+			...this.resolve_route_options()
+		});
+	}
+
+	on_filter_change(filters) {
+		this.filters = filters
+		this.start = 0
+		this.update_route_options()
+		this.refresh()
+	}
+
+	on_sort_change(sort_by, sort_order) {
+		this.sort_by = sort_by;
+		this.sort_order = sort_order;
+		this.update_route_options()
+		this.refresh()
 	}
 
 	toggle_result_area() {
 		this.$result.toggle(this.data.length > 0);
 		this.$paging_area.toggle(this.data.length > 0);
 		this.$no_result.toggle(this.data.length == 0);
-
 		const show_more = this.start + this.page_length <= this.data.length;
 		this.$paging_area.find(".btn-more").toggle(show_more);
 	}
@@ -584,106 +650,70 @@ class FilterArea {
 		);
 
 		this.$filter_list_wrapper = this.list_view.$filter_section;
-		this.trigger_refresh = true;
+		this.prevent_onchange = false;
+		this.prev_filters = null;
 		this.setup();
 	}
 
 	setup() {
-		if (!this.list_view.hide_page_form) this.make_standard_filters();
+		if (!this.list_view.hide_page_form) {
+			this.make_standard_filters();
+		}
 		this.make_filter_list();
 	}
 
 	get() {
 		let filters = this.filter_list.get_filters();
 		let standard_filters = this.get_standard_filters();
-
-		return filters.concat(standard_filters).uniqBy(JSON.stringify);
+		return filters.concat(standard_filters).map((filter) => filter.slice(0, 4)).uniqBy(JSON.stringify);
 	}
 
-	set(filters) {
-		// use to method to set filters without triggering refresh
-		this.trigger_refresh = false;
-		return this.add(filters, false).then(() => {
-			this.trigger_refresh = true;
-			this.filter_list.update_filter_button();
-		});
-	}
-
-	add(filters, refresh = true) {
-		if (!filters || (Array.isArray(filters) && filters.length === 0))
-			return Promise.resolve();
-
-		if (typeof filters[0] === "string") {
-			// passed in the format of doctype, field, condition, value
-			const filter = Array.from(arguments);
-			filters = [filter];
-		}
-
-		filters = filters.filter(f => !this.exists(f));
-
-		// standard filters = filters visible on list view
-		// non-standard filters = filters set by filter button
-		const { non_standard_filters, promise } = this.set_standard_filter(
-			filters
-		);
-
-		return promise
-			.then(() => {
-				return (
-					non_standard_filters.length > 0 &&
-					this.filter_list.add_filters(non_standard_filters)
-				);
-			})
-			.then(() => {
-				refresh && this.list_view.refresh();
-			});
-	}
-
-	refresh_list_view() {
-		if (this.trigger_refresh) {
-			this.list_view.start = 0;
-			this.list_view.refresh();
-			this.list_view.on_filter_change();
-		}
-	}
-
-	exists(f) {
-		let exists = false;
-		// check in standard filters
+	get_standard_filters() {
+		const filters = [];
 		const fields_dict = this.list_view.page.fields_dict;
-		if (f[2] === "=" && f[1] in fields_dict) {
-			const value = fields_dict[f[1]].get_value();
+		for (let key in fields_dict) {
+			let field = fields_dict[key];
+			let value = field.get_value();
+
 			if (value) {
-				exists = true;
+				if (field.df.condition === "like" && !value.includes("%")) {
+					value = "%" + value + "%";
+				}
+				filters.push([
+					this.list_view.doctype,
+					field.df.fieldname,
+					field.df.condition || "=",
+					value,
+				]);
 			}
 		}
 
-		// check in filter area
-		if (!exists) {
-			exists = this.filter_list.filter_exists(f);
-		}
-
-		return exists;
+		return filters;
 	}
 
-	set_standard_filter(filters) {
-		if (filters.length === 0) {
-			return {
-				non_standard_filters: [],
-				promise: Promise.resolve(),
-			};
-		}
+	async set(filters) {
+		// use to method to set filters without triggering refresh
+		await this._clear();
+		await this._add(filters);
+	}
 
+	async add() {
+		await this._add.apply(this, arguments);
+		this.onchange();
+	}
+
+	async _add(filters) {
+		this.prevent_onchange = true;
 		const fields_dict = this.list_view.page.fields_dict;
 
-		let out = filters.reduce((out, filter) => {
-			// eslint-disable-next-line
-			const [dt, fieldname, condition, value] = filter;
-			out.promise = out.promise || Promise.resolve();
-			out.non_standard_filters = out.non_standard_filters || [];
+		if (typeof filters[0] === "string") {
+			// passed in the format of doctype, field, condition, value
+			filters = [Array.from(arguments)];
+		}
 
-			// set in list view area if filters are present
-			// don't set like filter on link fields (gets reset)
+		filters = filters.filter(filter => !this.exists(filter));
+		const [standard_filters, non_standard_filters] = filters.reduce((acc, filter) => {
+			const [dt, fieldname, condition, value] = filter;
 			if (
 				fields_dict[fieldname] &&
 				(
@@ -691,55 +721,88 @@ class FilterArea {
 					(condition === "like" && fields_dict[fieldname]?.df?.fieldtype != "Link")
 				)
 			) {
-				// standard filter
-				out.promise = out.promise.then(() =>
-					fields_dict[fieldname].set_value(value)
-				);
+				acc[0].push(filter)
 			} else {
-				// filter out non standard filters
-				out.non_standard_filters.push(filter);
+				acc[1].push(filter)
 			}
-			return out;
-		}, {});
+			return acc;
+		}, [[], []]);
 
-		return out;
+		await Promise.all([
+			this.filter_list.add_filters(non_standard_filters),
+			Promise.all(standard_filters.map((filter) => {
+				const [dt, fieldname, condition, value] = filter;
+				return fields_dict[fieldname].set_value(value)
+			}))
+		])
+
+		this.prevent_onchange = false;
 	}
 
-	remove_filters(filters) {
-		filters.map(f => {
-			this.remove(f[1]);
-		});
+	async remove(filters) {
+		await this._remove.apply(this, arguments);
+		this.onchange();
 	}
 
-	remove(fieldname) {
+	async _remove(filters) {
+		this.prevent_onchange = true;
 		const fields_dict = this.list_view.page.fields_dict;
+		const fieldnames = typeof filters === "string" ? [filters] : filters.map((filter) => filter[1])
 
-		if (fieldname in fields_dict) {
-			fields_dict[fieldname].set_value("");
-		}
+		await Promise.all(
+			fieldnames
+				.filter(fieldname => fields_dict[fieldname] !== undefined)
+				.map(fieldname => fields_dict[fieldname].set_value(""))
+		);
 
-		let filter = this.filter_list.get_filter(fieldname);
-		if (filter) filter.remove();
+		fieldnames
+			.filter(fieldname => fields_dict[fieldname] === undefined)
+			.forEach(fieldname => {
+				const filter = this.filter_list.get_filter(fieldname);
+				if (filter) {
+					filter.remove();
+				}
+		});
+
 		this.filter_list.apply();
-		return Promise.resolve();
+		this.prevent_onchange = false;
 	}
 
-	clear(refresh = true) {
-		if (!refresh) {
-			this.trigger_refresh = false;
-		}
+	async clear() {
+		await this._clear()
+		this.onchange()
+	}
 
+	async _clear() {
+		this.prevent_onchange = true;
 		this.filter_list.clear_filters();
+		await Promise.all(Object.values(this.list_view.page.fields_dict).map(field => field.set_value("")))
+		this.prevent_onchange = false;
+	}
 
-		const promises = [];
+	exists(filter) {
+		// check in standard filters
 		const fields_dict = this.list_view.page.fields_dict;
-		for (let key in fields_dict) {
-			const field = this.list_view.page.fields_dict[key];
-			promises.push(() => field.set_value(""));
+		if (filter[2] === "=" && filter[1] in fields_dict) {
+			const value = fields_dict[filter[1]].get_value();
+			if (value) {
+				return true
+			}
 		}
-		return frappe.run_serially(promises).then(() => {
-			this.trigger_refresh = true;
-		});
+
+		return this.filter_list.filter_exists(filter);
+	}
+
+	onchange() {
+		if (!this.prevent_onchange) {
+			const next_filters = this.get();
+			// Should be removed once all edge cases are solved
+			const changed = !frappe.utils.deep_equal(next_filters, this.prev_filters)
+			this.prev_filters = next_filters
+			if (changed) {
+				this.list_view.on_filter_change(this.get());
+			}
+		}
 	}
 
 	make_standard_filters() {
@@ -750,13 +813,13 @@ class FilterArea {
 				label: "ID",
 				condition: "like",
 				fieldname: "name",
-				onchange: () => this.refresh_list_view(),
+				onchange: this.onchange.bind(this),
 			},
 		];
 
 		if (this.list_view.custom_filter_configs) {
 			this.list_view.custom_filter_configs.forEach((config) => {
-				config.onchange = () => this.refresh_list_view();
+				config.onchange =  this.onchange.bind(this);
 			});
 
 			fields = fields.concat(this.list_view.custom_filter_configs);
@@ -820,7 +883,7 @@ class FilterArea {
 						fieldname: df.fieldname,
 						condition: condition,
 						default: default_value,
-						onchange: () => this.refresh_list_view(),
+						onchange: this.onchange.bind(this),
 						ignore_link_validation: fieldtype === "Dynamic Link",
 						is_filter: 1,
 					};
@@ -830,28 +893,6 @@ class FilterArea {
 		fields.map(df => {
 			this.list_view.page.add_field(df, this.standard_filters_wrapper);
 		});
-	}
-
-	get_standard_filters() {
-		const filters = [];
-		const fields_dict = this.list_view.page.fields_dict;
-		for (let key in fields_dict) {
-			let field = fields_dict[key];
-			let value = field.get_value();
-			if (value) {
-				if (field.df.condition === "like" && !value.includes("%")) {
-					value = "%" + value + "%";
-				}
-				filters.push([
-					this.list_view.doctype,
-					field.df.fieldname,
-					field.df.condition || "=",
-					value,
-				]);
-			}
-		}
-
-		return filters;
 	}
 
 	make_filter_list() {
@@ -869,12 +910,11 @@ class FilterArea {
 
 		this.filter_button = this.$filter_list_wrapper.find('.filter-button');
 		this.filter_list = new frappe.ui.FilterGroup({
-			base_list: this.list_view,
 			parent: this.$filter_list_wrapper,
 			doctype: this.list_view.doctype,
 			filter_button: this.filter_button,
 			default_filters: [],
-			on_change: () => this.refresh_list_view(),
+			on_change:  this.onchange.bind(this),
 		});
 	}
 

@@ -99,8 +99,9 @@ frappe.ui.FilterGroup = class {
 	}
 
 	apply() {
-		this.update_filters();
-		this.on_change();
+		if (this.update_filters()) {
+			this.on_change();
+		}
 	}
 
 	update_filter_button() {
@@ -214,7 +215,6 @@ frappe.ui.FilterGroup = class {
 			filter_items: (doctype, fieldname) => {
 				return !this.filter_exists([doctype, fieldname]);
 			},
-			filter_list: this.base_list || this,
 		};
 		let filter = new frappe.ui.Filter(args);
 		this.filters.push(filter);
@@ -263,18 +263,21 @@ frappe.ui.FilterGroup = class {
 
 	update_filters() {
 		// remove hidden filters and undefined filters
+		const length = this.filters.length;
 		const filter_exists = (f) => ![undefined, null].includes(f.get_selected_value());
 		this.filters.map(f => !filter_exists(f) && f.remove());
 		this.filters = this.filters.filter(f => filter_exists(f) && f.field);
 		this.update_filter_button();
-		this.filters.length === 0 &&
-			this.toggle_empty_filters(true);
+		this.filters.length === 0 && this.toggle_empty_filters(true);
+		return length === this.filters.length
 	}
 
 	clear_filters() {
+		const length = this.filters.length;
 		this.filters.map((f) => f.remove(true));
 		// {}: Clear page filters, .date-range-picker (called list run())
 		this.filters = [];
+		return length === this.filters.length
 	}
 
 	get_filter(fieldname) {
@@ -354,7 +357,7 @@ frappe.ui.FilterGroup = class {
 			.then(() => {
 				return (
 					non_standard_filters.length > 0 &&
-					this.filter_list.add_filters(non_standard_filters)
+					this.add_filters(non_standard_filters)
 				);
 			})
 			.then(() => {

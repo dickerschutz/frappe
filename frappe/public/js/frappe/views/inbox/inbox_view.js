@@ -5,49 +5,68 @@
 frappe.provide("frappe.views");
 
 frappe.views.InboxView = class InboxView extends frappe.views.ListView {
-	static load_last_view() {
-		const route = frappe.get_route();
-		if (!route[3] && frappe.boot.email_accounts.length) {
-			let email_account;
-			if (frappe.boot.email_accounts[0].email_id == "All Accounts") {
-				email_account = "All Accounts";
-			} else {
-				email_account = frappe.boot.email_accounts[0].email_account;
-			}
-			frappe.set_route("List", "Communication", "Inbox", email_account);
-			return true;
-		} else if (!route[3] || (route[3] !== "All Accounts" && !is_valid(route[3]))) {
-			frappe.throw(__('No email account associated with the User. Please add an account under User > Email Inbox.'));
-		}
-		return false;
-
-		function is_valid(email_account) {
-			return frappe.boot.email_accounts.find(d => d.email_account === email_account);
-		}
-	}
 
 	get view_name() {
 		return 'Inbox';
 	}
 
-	show() {
-		super.show();
-		// save email account in user_settings
-		this.save_view_user_settings({
-			last_email_account: this.current_email_account
-		});
+	load_settings() {
+		return {
+			...super.load_settings(),
+		}
+	}
+
+	get_default_args() {
+		return {
+			...super.get_default_args(),
+			sort_by: 'communication_date',
+			sort_order: 'desc'
+		}
+	}
+
+	get_settings_args() {
+
+		let email_account = this.email_account;
+		const default_filters = [
+			["Communication", "communication_type", "=", "Communication", true],
+			["Communication", "communication_medium", "=", "Email", true],
+		];
+		let filters = [];
+		if (email_account === "Sent") {
+			filters = default_filters.concat([
+				["Communication", "sent_or_received", "=", "Sent", true],
+				["Communication", "email_status", "not in", "Spam,Trash", true],
+			]);
+		} else if (in_list(["Spam", "Trash"], email_account)) {
+			filters = default_filters.concat([
+				["Communication", "email_status", "=", email_account, true],
+				["Communication", "email_account", "in", frappe.boot.all_accounts, true]
+			]);
+		} else {
+			var op = "=";
+			if (email_account == "All Accounts") {
+				op = "in";
+				email_account = frappe.boot.all_accounts;
+			}
+
+			filters = default_filters.concat([
+				["Communication", "sent_or_received", "=", "Received", true],
+				["Communication", "status", "=", "Open", true],
+				["Communication", "email_account", op, email_account, true],
+				["Communication", "email_status", "not in", "Spam,Trash", true],
+			]);
+		}
+
+		return {
+			...super.get_settings_args(),
+			filters
+		}
 	}
 
 	setup_defaults() {
 		super.setup_defaults();
-
-		// initialize with saved order by
-		this.sort_by = this.view_user_settings.sort_by || 'communication_date';
-		this.sort_order = this.view_user_settings.sort_order || 'desc';
-
 		this.email_account = frappe.get_route()[3];
 		this.page_title = this.email_account;
-		this.filters = this.get_inbox_filters();
 	}
 
 	setup_columns() {
@@ -125,40 +144,6 @@ frappe.views.InboxView = class InboxView extends frappe.views.ListView {
 		`;
 	}
 
-	get_inbox_filters() {
-		var email_account = this.email_account;
-		var default_filters = [
-			["Communication", "communication_type", "=", "Communication", true],
-			["Communication", "communication_medium", "=", "Email", true],
-		];
-		var filters = [];
-		if (email_account === "Sent") {
-			filters = default_filters.concat([
-				["Communication", "sent_or_received", "=", "Sent", true],
-				["Communication", "email_status", "not in", "Spam,Trash", true],
-			]);
-		} else if (in_list(["Spam", "Trash"], email_account)) {
-			filters = default_filters.concat([
-				["Communication", "email_status", "=", email_account, true],
-				["Communication", "email_account", "in", frappe.boot.all_accounts, true]
-			]);
-		} else {
-			var op = "=";
-			if (email_account == "All Accounts") {
-				op = "in";
-				email_account = frappe.boot.all_accounts;
-			}
-
-			filters = default_filters.concat([
-				["Communication", "sent_or_received", "=", "Received", true],
-				["Communication", "status", "=", "Open", true],
-				["Communication", "email_account", op, email_account, true],
-				["Communication", "email_status", "not in", "Spam,Trash", true],
-			]);
-		}
-
-		return filters;
-	}
 
 	get_no_result_message() {
 		var email_account = this.email_account;
@@ -200,10 +185,10 @@ frappe.views.InboxView = class InboxView extends frappe.views.ListView {
 
 	make_new_doc() {
 		if (!this.email_account && !frappe.boot.email_accounts.length) {
-			frappe.route_options = {
+			const route_options = {
 				'email_id': frappe.session.user_email
 			};
-			frappe.new_doc('Email Account');
+			frappe.new_doc('Email Account', route_options);
 		} else {
 			new frappe.views.CommunicationComposer();
 		}

@@ -5,18 +5,6 @@ frappe.provide("frappe.views.calendar");
 frappe.provide("frappe.views.calendars");
 
 frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
-	static load_last_view() {
-		const route = frappe.get_route();
-		if (route.length === 3) {
-			const doctype = route[1];
-			const user_settings = frappe.get_user_settings(doctype)['Calendar'] || {};
-			route.push(user_settings.last_calendar || 'default');
-			frappe.set_route(route);
-			return true;
-		} else {
-			return false;
-		}
-	}
 
 	toggle_result_area() {}
 
@@ -24,13 +12,17 @@ frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
 		return 'Calendar';
 	}
 
+	load_settings() {
+		return {
+			...super.load_settings(),
+			calendar: frappe.views.calendar[this.doctype]
+		}
+	}
+
 	setup_defaults() {
-		return super.setup_defaults()
-			.then(() => {
-				this.page_title = __('{0} Calendar', [this.page_title]);
-				this.calendar_settings = frappe.views.calendar[this.doctype] || {};
-				this.calendar_name = frappe.get_route()[3];
-			});
+		super.setup_defaults()
+		this.page_title = __('{0} Calendar', [this.page_title]);
+		this.calendar_name = frappe.get_route()[3] || "default";
 	}
 
 	setup_page() {
@@ -42,44 +34,36 @@ frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
 
 	}
 
-	before_render() {
-		super.before_render();
-		this.save_view_user_settings({
-			last_calendar: this.calendar_name
-		});
-	}
-
 	render() {
-		if (this.calendar) {
+		if (this.calendar === undefined) {
+			this.calendar = new frappe.views.Calendar(this.calendar_options);
+		} else {
 			this.calendar.refresh();
-			return;
 		}
-
-		this.load_lib
-			.then(() => this.get_calendar_preferences())
-			.then(options => {
-				this.calendar = new frappe.views.Calendar(options);
-			});
 	}
 
-	get_calendar_preferences() {
+	async init() {
+		await super.init()
+		await this.load_calendar_options();
+	}
+
+	async load_calendar_options() {
 		const options = {
 			doctype: this.doctype,
 			parent: this.$result,
 			page: this.page,
 			list_view: this
 		};
-		const calendar_name = this.calendar_name;
 
-		return new Promise(resolve => {
-			if (calendar_name === 'default') {
-				Object.assign(options, frappe.views.calendar[this.doctype]);
+		this.calendar_options = await new Promise(resolve => {
+			if (this.calendar_name === 'default') {
+				Object.assign(options, this.settings.calendar);
 				resolve(options);
 			} else {
-				frappe.model.with_doc('Calendar View', calendar_name, () => {
-					const doc = frappe.get_doc('Calendar View', calendar_name);
+				frappe.model.with_doc('Calendar View', this.calendar_name, () => {
+					const doc = frappe.get_doc('Calendar View', this.calendar_name);
 					if (!doc) {
-						frappe.show_alert(__("{0} is not a valid Calendar. Redirecting to default Calendar.", [calendar_name.bold()]));
+						frappe.show_alert(__("{0} is not a valid Calendar. Redirecting to default Calendar.", [this.calendar_name.bold()]));
 						frappe.set_route("List", this.doctype, "Calendar", "default");
 						return;
 					}

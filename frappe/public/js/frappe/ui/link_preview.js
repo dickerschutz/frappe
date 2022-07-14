@@ -12,13 +12,10 @@ frappe.ui.LinkPreview = class {
 			this.link_hovered = true;
 			this.element = $(e.currentTarget);
 			this.is_link = this.element.get(0).tagName.toLowerCase() === 'a';
-
-			if (!this.element.parents().find('.popover').length) {
-				this.identify_doc();
-				this.popover = this.element.data("bs.popover");
-				if (this.name && this.doctype) {
-					this.setup_popover_control(e);
-				}
+			this.popover = this.element.data("bs.popover");
+			this.identify_doc();
+			if (this.name && this.doctype) {
+				this.setup_popover_control(e);
 			}
 		});
 		this.handle_popover_hide();

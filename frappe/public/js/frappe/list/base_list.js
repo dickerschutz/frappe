@@ -77,6 +77,7 @@ frappe.views.BaseList = class BaseList {
 		];
 	}
 
+<<<<<<< HEAD
 	get_settings() {
 		return frappe.listview_settings[this.doctype] || {};
 	}
@@ -153,6 +154,10 @@ frappe.views.BaseList = class BaseList {
 
 	setup_fields() {
 		this.set_fields();
+=======
+	async setup_fields() {
+		await this.set_fields();
+>>>>>>> listview-link-titles
 		this.build_fields();
 	}
 

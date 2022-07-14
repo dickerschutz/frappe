@@ -127,11 +127,15 @@ frappe.ui.LinkPreview = class {
 		this.popovers_list.forEach($el => $el.hide());
 	}
 
-	get_preview_data() {
-		return frappe.xcall('frappe.desk.link_preview.get_preview_data', {
-			'doctype': this.doctype,
-			'docname': this.name,
-		});
+	async get_preview_data() {
+		if (this.doctype && this.name) {
+			return await frappe.xcall('frappe.desk.link_preview.get_preview_data', {
+				'doctype': this.doctype,
+				'docname': this.name,
+			});
+		}
+
+		return null;
 	}
 
 	init_preview_popover(preview_data) {

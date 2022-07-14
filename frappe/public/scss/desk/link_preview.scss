@@ -1,5 +1,10 @@
 .link-preview-popover {
-	max-width: 100%;
+
+	max-width: 80vw;
+
+	@media (min-width: map-get($grid-breakpoints, "md")) {
+		max-width: 300px;
+	}
 
 	.popover-content {
 		padding: var(--padding-md) 25px;
@@ -24,6 +29,7 @@
 		.preview-name {
 			font-size: var(--text-base);
 			font-weight: 500;
+			text-align: center;
 		}
 
 		.preview-title:not(:empty) {

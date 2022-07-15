@@ -27,10 +27,6 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 URL_PREFIXES = ("http://", "https://")
 
 
-def is_url(path):
-	return path.startswith("http://") or path.startswith("https://")
-
-
 class File(Document):
 	no_feed_on_delete = True
 
@@ -283,15 +279,11 @@ class File(Document):
 	def validate_file_on_disk(self):
 		"""Validates existence file"""
 		full_path = self.get_full_path()
-<<<<<<< HEAD
-		if not is_url(full_path) and not os.path.exists(full_path):
-=======
 
 		if full_path.startswith(URL_PREFIXES):
 			return True
 
 		if not os.path.exists(full_path):
->>>>>>> develop
 			frappe.throw(_("File {0} does not exist").format(self.file_url), IOError)
 
 	def validate_duplicate_entry(self):
@@ -328,11 +320,7 @@ class File(Document):
 			self.file_name = re.sub(r"/", "", self.file_name)
 
 	def generate_content_hash(self):
-<<<<<<< HEAD
-		if self.content_hash or not self.file_url or is_url(self.file_url):
-=======
 		if self.content_hash or not self.file_url or self.is_remote_file:
->>>>>>> develop
 			return
 		file_name = self.file_url.split("/")[-1]
 		try:
@@ -450,21 +438,6 @@ class File(Document):
 			self.validate_file_url()
 		file_path = self.get_full_path()
 
-<<<<<<< HEAD
-		if is_url(file_path):
-			r = requests.get(file_path, allow_redirects=True)
-			content = r.content
-		else:
-			with io.open(encode(file_path), mode="rb") as f:
-				content = f.read()
-
-		try:
-			# for plain text files
-			content = content.decode()
-		except UnicodeDecodeError:
-			# for .png, .jpg, etc
-			pass
-=======
 		# read the file
 		with open(file_path, mode="rb") as f:
 			self._content = f.read()
@@ -474,26 +447,14 @@ class File(Document):
 			except UnicodeDecodeError:
 				# for .png, .jpg, etc
 				pass
->>>>>>> develop
 
 		return self._content
 
-
 	def get_full_path(self):
 		"""Returns file path from given file name"""
-		file_path = self.file_url or self.file_name
-		if not is_url(file_path):
-			if "/" not in file_path:
-				file_path = "/files/" + file_path
 
-<<<<<<< HEAD
-			if file_path.startswith("/private/files/"):
-				file_path = get_files_path(*file_path.split("/private/files/", 1)[1].split("/"), is_private=1)
-			elif file_path.startswith("/files/"):
-				file_path = get_files_path(*file_path.split("/files/", 1)[1].split("/"))
-			elif not self.file_url:
-				frappe.throw(_("There is some problem with the file url: {0}").format(file_path))
-=======
+		file_path = self.file_url or self.file_name
+
 		site_url = get_url()
 		if "/files/" in file_path and file_path.startswith(site_url):
 			file_path = file_path.split(site_url, 1)[1]
@@ -515,7 +476,6 @@ class File(Document):
 
 		elif not self.file_url:
 			frappe.throw(_("There is some problem with the file url: {0}").format(file_path))
->>>>>>> develop
 
 		if not is_safe_path(file_path):
 			frappe.throw(_("Cannot access file path {0}").format(file_path))

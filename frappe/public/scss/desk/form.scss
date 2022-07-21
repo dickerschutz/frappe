@@ -156,10 +156,10 @@
 		.open-notification {
 			display: inline-flex;
 			align-items: center;
-			background-color: var(--indicator-red-bg);
+			background-color: var(--alert-bg-warning);
 			font-size: var(--text-xs);
 			padding: 0 var(--padding-sm);
-			color: var(--indicator-red);
+			color: var(--alert-text-warning);
 			border-radius: var(--border-radius);
 			cursor: pointer;
 		}

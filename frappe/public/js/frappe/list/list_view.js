@@ -65,7 +65,6 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 
 	setup_defaults() {
 		super.setup_defaults();
-
 		this.view = "List";
 
 		// build menu items
@@ -93,6 +92,34 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 			.then((doc) => {
 				this.list_view_settings = doc.message || {}
 			});
+	}
+
+	get_default_args() {
+		return {
+			...super.get_default_args(),
+			tags_shown: false
+		}
+	}
+
+	get_route_options_args() {
+		let options = super.get_route_options_args();
+		const list = frappe.route_options.list;
+		if (list) {
+			options = {
+				...options,
+				tags_shown: Boolean(list.tags_shown)
+			}
+		}
+		return options
+	}
+
+	resolve_route_options() {
+		return {
+			...super.resolve_route_options(),
+			list: {
+				tags_shown: this.tags_shown,
+			}
+		}
 	}
 
 	validate_filters(filters) {
@@ -458,7 +485,6 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 
 	get_args() {
 		const args = super.get_args();
-
 		return Object.assign(args, {
 			with_comment_count: true,
 		});
@@ -520,6 +546,7 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 		this.set_rows_as_checked();
 		this.on_row_checked();
 		this.render_count();
+		this.render_tags();
 	}
 
 	render_list() {
@@ -544,6 +571,17 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 				this.$result.find(".list-count").html(`<span>${str}</span>`);
 			});
 		}
+	}
+
+	render_tags() {
+		if (this.tags_shown) {
+			this.$result.find('.tag-col').removeClass("hide");
+		} else {
+			this.$result.find('.tag-col').addClass("hide");
+		}
+
+		const preview_label = this.tags_shown ? __("Hide Tags") : __("Show Tags");
+		this.list_sidebar.parent.find(".list-tag-preview").text(preview_label);
 	}
 
 	get_header_html() {
@@ -1240,9 +1278,7 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 	}
 
 	setup_tag_event() {
-		this.tags_shown = false;
 		this.list_sidebar && this.list_sidebar.parent.on("click", ".list-tag-preview", () => {
-			this.tags_shown = !this.tags_shown;
 			this.toggle_tags();
 		});
 	}
@@ -1314,9 +1350,9 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 	}
 
 	toggle_tags() {
-		this.$result.find('.tag-col').toggleClass("hide");
-		const preview_label = this.tags_shown ? __("Hide Tags") : __("Show Tags");
-		this.list_sidebar.parent.find(".list-tag-preview").text(preview_label);
+		this.tags_shown = !this.tags_shown;
+		this.update_route_options();
+		this.render();
 	}
 
 	get_checked_items(only_docnames) {

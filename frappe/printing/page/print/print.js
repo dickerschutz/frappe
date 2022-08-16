@@ -36,8 +36,8 @@ frappe.ui.form.PrintView = class {
 			</div>
 			<div class="page-break-message text-muted text-center text-medium margin-top"></div>
 		</div>
-		<div class="preview-beta-wrapper">
-			<iframe width="100%" height="0" frameBorder="0"></iframe>
+		<div class="preview-beta-wrapper" style="height: 100vh;">
+			<iframe width="100%" height="100%" frameBorder="0"></iframe>
 		</div>
 		`
 		);

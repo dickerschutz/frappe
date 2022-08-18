@@ -219,7 +219,7 @@ class PrintFormatGenerator:
 		fieldname = path[-1]
 		df = doc.meta.get_field(fieldname)
 		doc_name = doc.get(fieldname)
-		if doc_name is not None:
+		if doc_name:
 			doc = frappe.get_doc(df.options, doc_name)
 			from frappe.www.printview import set_link_titles
 			set_link_titles(doc)

@@ -151,9 +151,9 @@ frappe.views.BaseList = class BaseList {
 		}
 	}
 
-	setup_fields() {
-		this.set_fields();
-		this.build_fields();
+	async setup_fields() {
+		await this.set_fields();
+		await this.build_fields();
 	}
 
 	async set_fields() {
@@ -183,7 +183,7 @@ frappe.views.BaseList = class BaseList {
 		});
 	}
 
-	build_fields() {
+	async build_fields() {
 		// fill in missing doctype
 		this.fields = this.fields.map((f) => {
 			if (typeof f === "string") {

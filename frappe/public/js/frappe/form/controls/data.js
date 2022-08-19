@@ -216,11 +216,11 @@ frappe.ui.form.ControlData = class ControlData extends frappe.ui.form.ControlInp
 			this.$input.addClass(this.df.input_class);
 		}
 	}
-	set_input(value) {
+	async set_input(value) {
 		this.last_value = this.value;
 		this.value = value;
-		this.set_formatted_input(value);
-		this.set_disp_area(value);
+		await this.set_formatted_input(value);
+		await this.set_disp_area(value);
 		this.set_mandatory && this.set_mandatory(value);
 	}
 	set_formatted_input(value) {

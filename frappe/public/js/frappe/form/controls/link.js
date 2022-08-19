@@ -72,14 +72,14 @@ frappe.ui.form.ControlLink = class ControlLink extends frappe.ui.form.ControlDat
 			this.$input_area.find(".link-btn").remove();
 		}
 	}
-	set_formatted_input(value) {
-		super.set_formatted_input();
+	async set_formatted_input(value) {
+		await super.set_formatted_input();
 		if (!value) return;
 
 		if (!this.title_value_map) {
 			this.title_value_map = {};
 		}
-		this.set_link_title(value);
+		await this.set_link_title(value);
 	}
 	get_translated(value) {
 		return this.is_translatable() ? __(value) : value;
@@ -87,7 +87,7 @@ frappe.ui.form.ControlLink = class ControlLink extends frappe.ui.form.ControlDat
 	is_translatable() {
 		return in_list(frappe.boot?.translatable_doctypes || [], this.get_options());
 	}
-	set_link_title(value) {
+	async set_link_title(value) {
 		let doctype = this.get_options();
 
 		if (!doctype) return;
@@ -95,7 +95,7 @@ frappe.ui.form.ControlLink = class ControlLink extends frappe.ui.form.ControlDat
 		if (in_list(frappe.boot.link_title_doctypes, doctype)) {
 			let link_title = frappe.utils.get_link_title(doctype, value);
 			if (!link_title) {
-				link_title = frappe.utils
+				await frappe.utils
 					.fetch_link_title(doctype, value)
 					.then(link_title => {
 						this.translate_and_set_input_value(link_title, value);

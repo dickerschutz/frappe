@@ -1129,11 +1129,11 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 				} else if (f[2] == "User") {
 					f[2] = frappe.session.user;
 				}
-				this.filter_area.remove(f[0]);
+
 				return [this.doctype, f[0], f[1], f.slice(2).join(",")];
 			});
 
-			this.filter_area.add(filters_to_apply);
+			this.filter_area.add_replace(filters_to_apply);
 		});
 	}
 

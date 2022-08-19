@@ -172,8 +172,8 @@ frappe.ui.form.Control = class BaseControl {
 		return value;
 	}
 
-	set_value(value, force_set_value=false) {
-		return this.validate_and_set_in_model(value, null, force_set_value);
+	async set_value(value, force_set_value=false) {
+		await this.validate_and_set_in_model(value, null, force_set_value);
 	}
 	parse_validate_and_set_in_model(value, e) {
 		value = this.get_parsed_value(value);
@@ -225,10 +225,10 @@ frappe.ui.form.Control = class BaseControl {
 			return this.value || undefined;
 		}
 	}
-	set_model_value(value) {
+	async set_model_value(value) {
 		if (this.frm) {
 			this.last_value = value;
-			return frappe.model.set_value(this.doctype, this.docname, this.df.fieldname,
+			await frappe.model.set_value(this.doctype, this.docname, this.df.fieldname,
 				value, this.df.fieldtype);
 		} else {
 			if (this.doc) {
@@ -237,8 +237,7 @@ frappe.ui.form.Control = class BaseControl {
 				// case where input is rendered on dialog where doc is not maintained
 				this.value = value;
 			}
-			this.set_input(value);
-			return Promise.resolve();
+			await this.set_input(value);
 		}
 	}
 	set_focus() {

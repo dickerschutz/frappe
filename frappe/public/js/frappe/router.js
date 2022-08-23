@@ -346,6 +346,7 @@ frappe.router = {
 		}
 
 		if (!frappe.utils.is_json_serializable(route_options)) {
+			console.error("Not a compatible json object", route_options)
 			throw new Error("Invalid route options, must be a compatible json object")
 		}
 

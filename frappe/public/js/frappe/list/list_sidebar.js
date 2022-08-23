@@ -208,12 +208,12 @@ frappe.views.ListSidebar = class ListSidebar {
 				label = "%,%";
 				condition = "not like";
 			}
-			this.list_view.filter_area.add(
+			this.list_view.filter_area.add([
 				this.doctype,
 				fieldname,
 				condition,
 				label
-			);
+			]);
 		});
 
 		this.sidebar.find(".list-stats-dropdown .stat-result").html(tag_list);

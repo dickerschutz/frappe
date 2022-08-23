@@ -279,11 +279,11 @@ frappe.views.ListGroupBy = class ListGroupBy {
 			operator = 'like';
 			value = `%${value}%`;
 		}
-		return this.list_view.filter_area.add(
+		return this.list_view.filter_area.add([
 			this.doctype,
 			fieldname,
 			operator,
 			value
-		);
+		]);
 	}
 };

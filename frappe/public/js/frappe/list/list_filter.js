@@ -28,6 +28,7 @@ export default class ListFilter {
 		this.$saved_filters = this.wrapper.find('.saved-filters').hide();
 		this.$saved_filters_preview = this.wrapper.find('.saved-filters-preview');
 		this.saved_filters_hidden = true;
+		this.toggle_saved_filters(true);
 
 		this.filter_input = frappe.ui.form.make_control({
 			df: {

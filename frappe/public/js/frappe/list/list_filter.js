@@ -105,9 +105,11 @@ export default class ListFilter {
 			const $li = $(e.currentTarget).closest('.filter-pill');
 			const name = $li.attr('data-name');
 			const applied_filters = this.get_filters_values(name);
-			$li.remove();
-			this.remove_filter(name).then(() => this.refresh());
-			this.list_view.filter_area.remove(applied_filters);
+			if (confirm("Delete filter preset?")) {
+				$li.remove();
+				this.remove_filter(name).then(() => this.refresh());
+				this.list_view.filter_area.remove(applied_filters);
+			}
 		});
 	}
 

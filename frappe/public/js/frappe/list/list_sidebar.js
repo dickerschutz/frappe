@@ -208,13 +208,13 @@ frappe.views.ListSidebar = class ListSidebar {
 				value = "not set";
 				condition = "is";
 			}
-
-			this.list_view.filter_area.add(
+			this.list_view.filter_area.add([
 				this.doctype,
 				fieldname,
 				condition,
 				value
-			);
+			]);
+
 		});
 
 		this.sidebar.find(".list-stats-dropdown .stat-result").html(tag_list);

@@ -722,8 +722,7 @@ class FilterArea {
 		const fields_dict = this.list_view.page.fields_dict;
 
 		if (typeof filters[0] === "string") {
-			// passed in the format of doctype, field, condition, value
-			filters = [Array.from(arguments)];
+			filters = [filters];
 		}
 
 		filters = filters.filter(filter => !this.exists(filter));

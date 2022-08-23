@@ -278,11 +278,11 @@ frappe.views.ListGroupBy = class ListGroupBy {
 		if (fieldname === '_assign') {
 			operator = 'in';
 		}
-		return this.list_view.filter_area.add(
+		return this.list_view.filter_area.add([
 			this.doctype,
 			fieldname,
 			operator,
 			value
-		);
+		]);
 	}
 };

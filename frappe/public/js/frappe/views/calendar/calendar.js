@@ -30,7 +30,7 @@ frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
 			...super.get_default_args(),
 			calendarWeekends: true,
 			calendarView: 'month',
-			calendarOffset: 0
+			calendarTimestamp: null
 		}
 	}
 
@@ -42,7 +42,7 @@ frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
 				...options,
 				calendarWeekends: Boolean(calendar.weekends),
 				calendarView: calendar.view,
-				calendarOffset: calendar.offset
+				calendarTimestamp: calendar.timestamp
 			}
 		}
 		return options
@@ -54,7 +54,7 @@ frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
 			calendar: {
 				weekends: this.calendarWeekends,
 				view: this.calendarView,
-				offset: this.calendarOffset,
+				timestamp: this.calendarTimestamp,
 			}
 		}
 	}
@@ -69,9 +69,9 @@ frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
 		this.update_route_options();
 	}
 
-	on_change_calendar_view(type, offset) {
+	on_change_calendar_view(type, timestamp) {
 		this.calendarView = type;
-		this.calendarOffset = offset;
+		this.calendarTimestamp = timestamp;
 		this.update_route_options();
 	}
 
@@ -108,7 +108,7 @@ frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
 			on_change_weekends: this.on_change_calendar_weekends.bind(this),
 			weekends: this.calendarWeekends,
 			defaultView: this.calendarView,
-			offset: this.calendarOffset
+			timestamp: this.calendarTimestamp
 		};
 
 		return await new Promise(resolve => {
@@ -264,7 +264,9 @@ frappe.views.Calendar = class Calendar {
 	}
 	setup_options() {
 		var me = this;
-		const span = this.get_view_span(this.defaultView);
+		const defaultDate = this.timestamp !== null ? moment(this.timestamp) : moment()
+		//const span = this.get_view_span(this.defaultView);
+		console.log(defaultDate)
 		this.cal_options = {
 			meridiem: false,
 			locale: frappe.boot.user.language || "en",
@@ -278,7 +280,7 @@ frappe.views.Calendar = class Calendar {
 			forceEventDuration: true,
 			displayEventTime: true,
 			defaultView: this.defaultView,
-			defaultDate: span ? moment().add(this.offset, span) : moment(),
+			defaultDate,
 			weekends: this.weekends,
 			nowIndicator: true,
 			events: function(start, end, timezone, callback) {
@@ -296,8 +298,8 @@ frappe.views.Calendar = class Calendar {
 			displayEventEnd: true,
 			viewRender: function(view) {
 				if (me.on_change_view !== undefined) {
-					const span = me.get_view_span(view.type)
-					me.on_change_view(view.type, span ? view.start.diff(moment(), span) : 0 );
+					const timestamp = me.$cal.fullCalendar('getDate').valueOf();
+					me.on_change_view(view.type, timestamp);
 				}
 			},
 			eventRender: function(event, element) {

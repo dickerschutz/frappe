@@ -258,7 +258,7 @@ frappe.ui.form.QuickEntryForm = class QuickEntryForm {
 		this.update_doc();
 		const route_options = {}
 		if (set_hooks && this.after_insert) {
-			route_options.after_save = (frm) => {
+			frappe.route_hooks.after_save = (frm) => {
 				this.after_insert(frm);
 			};
 		}

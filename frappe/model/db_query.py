@@ -706,7 +706,11 @@ class DatabaseQuery:
 				value = f"{frappe.db.escape(value, percent=False)}"
 
 		if (df and df.fieldtype == "JSON" or frappe.db.STANDARD_FIELD_CONVERSION_MAP.get(f.fieldname) == "JSON"):
-			return f"(JSON_VALUE({column_name}, '$[*]') {f.operator} {value} OR {column_name} {f.operator} {value})"
+			statements = [
+				f"{column_name} {f.operator} {value}",
+				*[f"JSON_VALUE({column_name}, '$[{index}]') {f.operator} {value}" for index in range(5)]
+			]
+			return " OR ".join(statements)
 
 		elif (
 			self.ignore_ifnull

@@ -75,6 +75,10 @@ frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
 		this.update_route_options();
 	}
 
+	async refresh() {
+		this.render();
+	}
+
 	setup_view() {
 
 	}
@@ -377,7 +381,9 @@ frappe.views.Calendar = class Calendar {
 		return args;
 	}
 	refresh() {
-		this.$cal.fullCalendar('refetchEvents');
+		const cal = this.$cal.fullCalendar("getCalendar")
+    	cal.removeEvents()
+        cal.refetchEvents()
 	}
 	prepare_events(events) {
 		var me = this;

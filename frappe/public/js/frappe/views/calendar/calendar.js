@@ -265,8 +265,6 @@ frappe.views.Calendar = class Calendar {
 	setup_options() {
 		var me = this;
 		const defaultDate = this.timestamp !== null ? moment(this.timestamp) : moment()
-		//const span = this.get_view_span(this.defaultView);
-		console.log(defaultDate)
 		this.cal_options = {
 			meridiem: false,
 			locale: frappe.boot.user.language || "en",

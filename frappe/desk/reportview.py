@@ -651,6 +651,8 @@ def scrub_user_tags(tagcount):
 	rdict = {}
 	tagdict = dict(tagcount)
 	for t in tagdict:
+		if not t:
+			continue
 		for tag in json.loads(t):
 			if tag:
 				if tag not in rdict:

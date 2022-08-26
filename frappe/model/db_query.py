@@ -710,7 +710,8 @@ class DatabaseQuery:
 				f"{column_name} {f.operator} {value}",
 				*[f"JSON_VALUE({column_name}, '$[{index}]') {f.operator} {value}" for index in range(5)]
 			]
-			return " OR ".join(statements)
+			statements = " OR ".join(statements)
+			return f"({statements})"
 
 		elif (
 			self.ignore_ifnull

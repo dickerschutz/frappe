@@ -518,6 +518,11 @@ frappe.ui.form.PrintView = class {
 	printit() {
 		let me = this;
 
+		let print_format = this.get_print_format();
+		if (print_format.print_format_builder_beta) {
+			return this.render_pdf()
+		}
+
 		if (cint(me.print_settings.enable_print_server)) {
 			if (localStorage.getItem('network_printer')) {
 				me.print_by_server();

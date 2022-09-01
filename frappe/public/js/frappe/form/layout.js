@@ -400,12 +400,19 @@ frappe.ui.form.Layout = class Layout {
 				fieldobj.doc = me.doc;
 				fieldobj.doctype = me.doc.doctype;
 				fieldobj.docname = me.doc.name;
-				fieldobj.df = {
-					...(frappe.meta.get_docfield(
-						me.doc.doctype,
-						fieldobj.df.fieldname, me.doc.name
-					) || fieldobj.df),
-					...fieldobj.df
+				const meta_df = frappe.meta.get_docfield(
+					me.doc.doctype,
+					fieldobj.df.fieldname,
+					me.doc.name
+				)
+
+				if (meta_df && fieldobj.df && fieldobj.df.doctype === undefined) {
+					fieldobj.df =  {
+						...meta_df,
+						...fieldobj.df,
+					}
+				} else {
+					fieldobj.df =  meta_df || fieldobj.df;
 				}
 
 				// on form change, permissions can change

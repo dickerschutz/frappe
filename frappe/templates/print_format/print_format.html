@@ -24,6 +24,12 @@
 		<div class="section-label">{{ section.label }}</div>
 		{% endif %}
 
+		{% if section.columns|length == 1 %}
+		{% set column = section.columns[0] %}
+		{% for df in column.fields %}
+		{{ macros.render_field(df, df.doc) }}
+		{% endfor %}
+		{% else %}
 		<div class="section-columns row">
 			{% for column in section.columns %}
 			<div class="column col">
@@ -33,6 +39,7 @@
 			</div>
 			{% endfor %}
 		</div>
+		{% endif %}
 	</div>
 	{% endfor %}
 	{{ footer or '' }}

@@ -82,45 +82,7 @@ frappe.views.BaseList = class BaseList {
 	}
 
 	get_route_options_args() {
-		const filters = frappe.route_options.filters ? Object.entries(frappe.route_options.filters).reduce((acc, [field, value]) => {
-			let doctype = null;
-
-			// if `Child DocType.fieldname`
-			if (field.includes(".")) {
-				doctype = field.split(".")[0];
-				field = field.split(".")[1];
-			}
-
-			// find the table in which the key exists
-			// for example the filter could be {"item_code": "X"}
-			// where item_code is in the child table.
-
-			// we can search all tables for mapping the doctype
-			if (!doctype) {
-				doctype = frappe.meta.get_doctype_for_field(
-					this.doctype,
-					field
-				);
-			}
-
-			if (doctype) {
-				if ($.isArray(value)) {
-					acc.push([doctype, field, value[0], value[1]]);
-				} else {
-					acc.push([doctype, field, "=", value]);
-				}
-			}
-			return acc
-		}, []) : undefined;
-
-		const sort_by = frappe.route_options.sort_by || undefined;
-		const sort_order = frappe.route_options.sort_order || undefined;
-
-		return {
-			filters,
-			sort_by,
-			sort_order
-		}
+		return frappe.views.parse_list_route_options(this.doctype, frappe.route_options);
 	}
 
 	get_presets_args() {
@@ -957,3 +919,46 @@ frappe.views.view_modes = [
 ];
 frappe.views.is_valid = (view_mode) =>
 	frappe.views.view_modes.includes(view_mode);
+
+
+frappe.views.parse_list_route_options = (doctype_, route_options) => {
+	const filters = route_options.filters ? Object.entries(route_options.filters).reduce((acc, [field, value]) => {
+		let doctype = null;
+
+		// if `Child DocType.fieldname`
+		if (field.includes(".")) {
+			doctype = field.split(".")[0];
+			field = field.split(".")[1];
+		}
+
+		// find the table in which the key exists
+		// for example the filter could be {"item_code": "X"}
+		// where item_code is in the child table.
+
+		// we can search all tables for mapping the doctype
+		if (!doctype) {
+			doctype = frappe.meta.get_doctype_for_field(
+				doctype_,
+				field
+			);
+		}
+
+		if (doctype) {
+			if ($.isArray(value)) {
+				acc.push([doctype, field, value[0], value[1]]);
+			} else {
+				acc.push([doctype, field, "=", value]);
+			}
+		}
+		return acc
+	}, []) : undefined;
+
+	const sort_by = route_options.sort_by || undefined;
+	const sort_order = route_options.sort_order || undefined;
+
+	return {
+		filters,
+		sort_by,
+		sort_order
+	}
+}

@@ -1123,11 +1123,12 @@ frappe.ui.form.Form = class FrappeForm {
 
 	navigate_records(prev) {
 		let filters, sort_field, sort_order;
-		let list_view = frappe.get_list_view(this.doctype);
-		if (list_view) {
-			filters = list_view.filters;
-			sort_field = list_view.sort_by;
-			sort_order = list_view.sort_order;
+		const list_view_key = Object.keys(frappe.route_options).find((key) => key.startsWith("__"));
+		if (list_view_key) {
+			const options = frappe.views.parse_list_route_options(this.doctype, frappe.route_options[list_view_key]);
+			filters = options.filters;
+			sort_field = options.sort_by;
+			sort_order = options.sort_order;
 		} else {
 			let list_settings = frappe.get_user_settings(this.doctype)['List'];
 			if (list_settings) {
@@ -1148,7 +1149,7 @@ frappe.ui.form.Form = class FrappeForm {
 
 		frappe.call('frappe.desk.form.utils.get_next', args).then(r => {
 			if (r.message) {
-				frappe.set_route('Form', this.doctype, r.message);
+				frappe.set_route(['Form', this.doctype, r.message], frappe.route_options);
 				this.focus_on_first_input();
 			}
 		});

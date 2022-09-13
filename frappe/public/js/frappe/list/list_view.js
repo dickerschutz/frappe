@@ -1796,9 +1796,3 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 		return actions_menu_items;
 	}
 };
-
-
-frappe.get_list_view = (doctype) => {
-	let route = `List/${doctype}/List`;
-	return frappe.views.list_view[route];
-};

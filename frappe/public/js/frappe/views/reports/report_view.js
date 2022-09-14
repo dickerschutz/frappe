@@ -16,7 +16,6 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 	}
 
 	async setup_defaults() {
-		super.setup_defaults();
 		this.page_title = __('Report:') + ' ' + this.page_title;
 		this.view = 'Report';
 
@@ -29,18 +28,24 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 			this.report_doc = await this.get_report_doc()
 			this.report_doc_settings = JSON.parse(this.report_doc.json)
 		}
+
+		super.setup_defaults();
 	}
 
-	get_preset_args() {
-		return {
-			...this.parse_group_by(this.report_doc_settings),
-			filters: this.report_doc_settings.filters,
-			order_by: this.report_doc_settings.order_by,
-			add_totals_row: this.report_doc_settings.add_totals_row,
-			page_title: this.report_name,
-			page_length:  this.report_doc_settings.page_length,
-			chart_args:  this.report_doc_settings.chart_args
-		};
+	get_presets_args() {
+		if (this.report_doc_settings) {
+			return {
+				...this.parse_group_by(this.report_doc_settings),
+				filters: this.report_doc_settings.filters,
+				order_by: this.report_doc_settings.order_by,
+				add_totals_row: this.report_doc_settings.add_totals_row,
+				page_title: this.report_name,
+				page_length:  this.report_doc_settings.page_length,
+				chart_args:  this.report_doc_settings.chart_args
+			};
+		}
+
+		return {}
 	}
 
 	get_route_options_args() {

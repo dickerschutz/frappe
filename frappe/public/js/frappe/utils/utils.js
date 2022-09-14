@@ -1295,7 +1295,7 @@ Object.assign(frappe.utils, {
 				} else if (!item.doctype) {
 					route = ["report", item.name];
 				} else {
-					route = [item.doctype, "view", "report", item.name]
+					route = [frappe.router.slug(item.doctype), "view", "report", item.name]
 				}
 			} else if (type === "page") {
 				route = [item.name]

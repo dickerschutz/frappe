@@ -1,4 +1,4 @@
-{% if value is not None and value != "" %}
+{% if value or value == 0 %}
 <div class="field {{ df.section.field_orientation or '' }}" {{ field_attributes(df) }}>
 	{%- block label -%}
 	<div class="label">{{ df.label }}</div>

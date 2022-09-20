@@ -105,7 +105,7 @@ frappe.views.BaseList = class BaseList {
 	get_default_args() {
 		return {
 			start: 0,
-			page_length: 20,
+			page_length: 25,
 			fields: [],
 			filters: [],
 			sort_by:  this.meta.sort_field || "modified",
@@ -398,7 +398,7 @@ frappe.views.BaseList = class BaseList {
 	}
 
 	setup_paging_area() {
-		const paging_values = [20, 100, 500];
+		const paging_values = [25, 50, 250];
 		this.$paging_area = $(
 			`<div class="list-paging-area level">
 				<div class="level-left">

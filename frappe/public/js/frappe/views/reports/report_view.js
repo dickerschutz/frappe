@@ -16,7 +16,6 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 	}
 
 	async setup_defaults() {
-		this.page_title = __('Report:') + ' ' + this.page_title;
 		this.view = 'Report';
 
 		const route = frappe.get_route();
@@ -30,6 +29,7 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 		}
 
 		super.setup_defaults();
+		this.page_title = __('Report:') + ' ' + this.page_title;
 	}
 
 	get_presets_args() {
@@ -235,6 +235,8 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 		const current_settings = this.resolve_report_settings();
 		const report_settings = this.report_doc_settings;
 		if (JSON.stringify(current_settings) !== JSON.stringify(report_settings)) {
+			console.log(current_settings)
+			console.log(report_settings)
 			this.page.set_indicator(__('Not Saved'), 'orange');
 		} else {
 			this.page.clear_indicator();

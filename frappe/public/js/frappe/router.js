@@ -78,7 +78,7 @@ frappe.router = {
 				}]),
 				list: {
 					__: (prev, next) => {
-						return [next[0], Object.keys(next[1]).length > 0 ? next[1] : prev[1]]
+						return [next[0], Object.keys(next[1]).length > 0 || next[0][3] !== prev[0][3] ? next[1] : prev[1]]
 					}
 				}
 			},

@@ -46,6 +46,9 @@ class Report(Document):
 	def before_insert(self):
 		self.set_doctype_roles()
 
+	def after_insert(self):
+		frappe.clear_cache()
+
 	def on_update(self):
 		self.export_doc()
 

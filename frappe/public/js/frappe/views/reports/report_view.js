@@ -1264,6 +1264,10 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 		return items;
 	}
 
+	clear_checked_items() {
+		this.datatable.rowmanager.checkAll(false);
+	}
+
 	resolve_report_settings() {
 		return {
 			filters: this.filter_area.get(),

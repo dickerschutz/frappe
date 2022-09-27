@@ -352,12 +352,13 @@ frappe.ui.form.Dashboard = class FormDashboard {
 			}
 		} else if (this.data.fieldname) {
 			filters = this.get_document_filter(doctype);
-			if (show_open && frappe.ui.notifications) {
-				frappe.ui.notifications.show_open_count_list(doctype);
-			}
 		}
 
-		frappe.set_route("List", doctype, "List", { filters });
+		if (show_open && frappe.ui.notifications) {
+			frappe.ui.notifications.show_open_count_list(doctype, filters);
+		} else {
+			frappe.set_route("List", doctype, "List", { filters });
+		}
 	}
 
 	get_document_filter(doctype) {

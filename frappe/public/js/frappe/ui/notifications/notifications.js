@@ -139,19 +139,21 @@ frappe.ui.notifications = {
 		});
 	},
 
-	show_open_count_list(doctype) {
+	show_open_count_list(doctype, filters) {
 		if (!frappe.ui.notifications.config) {
 			this.get_notification_config().then(() => {
-				this.route_to_list_with_filters(doctype);
+				this.route_to_list_with_filters(doctype, filters);
 			});
 		} else {
-			this.route_to_list_with_filters(doctype);
+			this.route_to_list_with_filters(doctype, filters);
 		}
 	},
 
-	route_to_list_with_filters(doctype) {
-		const filters = frappe.ui.notifications.config['conditions'][doctype];
-		frappe.set_route('List', doctype, filters && typeof filters === "object" ? filters : {});
+	route_to_list_with_filters(doctype, filters) {
+		frappe.set_route('List', doctype, 'List', { filters: {
+			...filters,
+			...frappe.ui.notifications.config['conditions'][doctype]
+		}});
 	}
 };
 

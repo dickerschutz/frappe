@@ -11,7 +11,7 @@ from frappe.config import get_modules_from_all_apps_for_user
 from frappe.model.document import Document
 from frappe.model.naming import append_number_if_name_exists
 from frappe.modules.export_file import export_to_files
-from frappe.utils import cint, get_datetime, getdate, now_datetime, nowdate
+from frappe.utils import cint, get_datetime, getdate, has_common, now_datetime, nowdate
 from frappe.utils.dashboard import cache_source
 from frappe.utils.data import format_date
 from frappe.utils.dateutils import (
@@ -85,6 +85,11 @@ def has_permission(doc, ptype, user):
 	else:
 		allowed_doctypes = frappe.permissions.get_doctypes_with_read()
 		if doc.document_type in allowed_doctypes:
+			return True
+
+	if doc.roles:
+		allowed = [d.role for d in doc.roles]
+		if has_common(roles, allowed):
 			return True
 
 	return False
@@ -244,7 +249,7 @@ def get_heatmap_chart_config(chart, filters, heatmap_year):
 		timestamp_field = f"extract(epoch from timestamp {datefield})"
 
 	data = dict(
-		frappe.db.get_all(
+		frappe.get_all(
 			doctype,
 			fields=[
 				timestamp_field,
@@ -387,3 +392,25 @@ class DashboardChart(Document):
 				json.loads(self.custom_options)
 			except ValueError as error:
 				frappe.throw(_("Invalid json added in the custom options: {0}").format(error))
+
+
+@frappe.whitelist()
+def get_parent_doctypes(child_type: str) -> list[str]:
+	"""Get all parent doctypes that have the child doctype."""
+	assert isinstance(child_type, str)
+
+	standard = frappe.get_all(
+		"DocField",
+		fields="parent",
+		filters={"fieldtype": "Table", "options": child_type},
+		pluck="parent",
+	)
+
+	custom = frappe.get_all(
+		"Custom Field",
+		fields="dt",
+		filters={"fieldtype": "Table", "options": child_type},
+		pluck="dt",
+	)
+
+	return standard + custom

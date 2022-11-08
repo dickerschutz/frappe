@@ -1291,11 +1291,11 @@ frappe.views.ListView = class ListView extends frappe.views.BaseList {
 			return;
 		}
 
-		frappe.realtime.on("list_update", (data) => {
+		frappe.realtime.on("list_update", frappe.utils.debounce((data) => {
 			if (data.doctype == this.doctype && !this.avoid_realtime_update()) {
 				this.refresh();
 			}
-		})
+		}))
 	}
 
 	avoid_realtime_update() {

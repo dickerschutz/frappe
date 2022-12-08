@@ -95,9 +95,7 @@ export default class ListFilter {
 			let $filter = $(e.currentTarget).parent('.filter-pill');
 			this.set_applied_filter($filter);
 			const name = $filter.attr('data-name');
-			this.list_view.filter_area.clear().then(() => {
-				this.list_view.filter_area.add(this.get_filters_values(name));
-			});
+			this.list_view.filter_area.replace(this.get_filters_values(name));
 		});
 	}
 

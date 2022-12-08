@@ -668,6 +668,11 @@ class FilterArea {
 		await this._add(filters);
 	}
 
+	async replace(filters) {
+		await this._clear()
+		await this.add(filters)
+	}
+
 	async add_replace(filters) {
 		await this._remove(filters.map(f => f[1]));
 		await this._add(filters);

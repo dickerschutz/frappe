@@ -17,9 +17,6 @@
 	{%- endif -%}
 </head>
 <body>
-	{% if print_format.custom_format %}
-	{{ print_format.html }}
-	{% else %}
 	{{ header or '' }}
 	{% for section in layout.sections %}
 	<div class="section {{ resolve_class({'page-break': section.page_break}) }}">
@@ -46,6 +43,4 @@
 	</div>
 	{% endfor %}
 	{{ footer or '' }}
-	{% endif %}
-</body>
 </html>

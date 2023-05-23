@@ -96,6 +96,12 @@ frappe.router = {
 
 					return next;
 				}
+			},
+			form: (prev, next) => {
+				if (Object.keys(next[1]).length === 0) {
+					next[1] = prev[1]
+				}
+				return next;
 			}
 		},
 	},

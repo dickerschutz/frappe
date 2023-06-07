@@ -196,10 +196,11 @@ def get_csv_content_from_google_sheets(url):
 	if response.ok:
 		# if it returns html, it couldn't find the CSV content
 		# because of invalid url or no access
-		if response.text.strip().endswith("</html>"):
+		if response.text.strip().endswith("</html>") or  response.text.strip().endswith("</body>"):
 			frappe.throw(
 				_("Google Sheets URL is invalid or not publicly accessible."), title=_("Invalid URL")
 			)
+		print(response.content)
 		return response.content
 	elif response.status_code == 400:
 		frappe.throw(

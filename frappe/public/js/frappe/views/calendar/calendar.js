@@ -112,7 +112,7 @@ frappe.views.CalendarView = class CalendarView extends frappe.views.ListView {
 			on_change_weekends: this.on_change_calendar_weekends.bind(this),
 			weekends: this.calendarWeekends,
 			defaultView: this.calendarView,
-			timestamp: this.calendarTimestamp
+			timestamp: this.calendarTimestamp,
 		};
 
 		return await new Promise(resolve => {
@@ -201,7 +201,10 @@ frappe.views.Calendar = class Calendar {
 			__("Select or drag across time slots to create a new event."));
 		this.footnote_area.css({"border-top": "0px"});
 
-		this.$cal.fullCalendar(this.cal_options);
+		this.$cal.fullCalendar({
+			...this.cal_options,
+			handleWindowResize: false
+		});
 		this.set_css();
 	}
 	setup_view_mode_button() {

@@ -250,7 +250,7 @@
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2020-08-27 14:12:09.906719",
+ "modified": "2023-11-28 14:43:50.987646",
  "modified_by": "Administrator",
  "module": "Contacts",
  "name": "Contact",
@@ -380,6 +380,8 @@
    "role": "All"
   }
  ],
+ "quick_entry": 1,
  "sort_field": "modified",
- "sort_order": "ASC"
+ "sort_order": "ASC",
+ "states": []
 }

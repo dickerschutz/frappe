@@ -1965,6 +1965,7 @@ def get_print(
 	doc=None,
 	output=None,
 	no_letterhead=0,
+	letterhead=None,
 	password=None,
 	pdf_options=None,
 ):
@@ -1982,10 +1983,9 @@ def get_print(
 
 	if print_format is not None and db.get_value("Print Format", print_format, "print_format_builder_beta"):
 		doc = get_doc(doctype, name) if doc is None else doc
-		letterhead = db.exists(dict(doctype="Letter Head", is_default=1)) if not no_letterhead else None
 		generator = PrintFormatGenerator(print_format, doc, letterhead=letterhead)
 		return (
-			generator.render_pdf()
+			generator.render_pdf(output=output)
 			if as_pdf
 			else generator.get_html_preview()
 		)

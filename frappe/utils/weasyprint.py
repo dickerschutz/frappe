@@ -4,6 +4,8 @@
 import click
 
 import frappe
+from PyPDF2 import PdfReader, PdfWriter
+import io
 
 
 @frappe.whitelist()
@@ -102,7 +104,7 @@ class PrintFormatGenerator:
 			footer_html = frappe.render_template("templates/print_format/print_footer.html", self.context)
 		return header_html, footer_html
 
-	def render_pdf(self):
+	def render_pdf(self, output: PdfWriter | None = None):
 		"""
 		Returns
 		-------
@@ -123,7 +125,12 @@ class PrintFormatGenerator:
 			self._apply_overlay_on_main(main_doc, self.header_body, self.footer_body)
 		pdf = main_doc.write_pdf()
 
-		return pdf
+		if output is not None:
+			reader = PdfReader(io.BytesIO(pdf))
+			output.append_pages_from_reader(reader)
+
+
+		return pdf if output is None else output
 
 	def _compute_overlay_element(self, element: str):
 		"""

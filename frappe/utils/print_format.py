@@ -16,7 +16,7 @@ from frappe.www.printview import validate_print_permission
 
 
 @frappe.whitelist()
-def download_multi_pdf(doctype, name, format=None, no_letterhead=False, options=None):
+def download_multi_pdf(doctype, name, format=None, no_letterhead=False, letterhead=None, options=None):
 	"""
 	Concatenate multiple docs as PDF .
 
@@ -75,6 +75,7 @@ def download_multi_pdf(doctype, name, format=None, no_letterhead=False, options=
 				as_pdf=True,
 				output=output,
 				no_letterhead=no_letterhead,
+				letterhead=letterhead,
 				pdf_options=options,
 			)
 		frappe.local.response.filename = "{doctype}.pdf".format(
@@ -91,6 +92,7 @@ def download_multi_pdf(doctype, name, format=None, no_letterhead=False, options=
 						as_pdf=True,
 						output=output,
 						no_letterhead=no_letterhead,
+						letterhead=letterhead,
 						pdf_options=options,
 					)
 				except Exception:

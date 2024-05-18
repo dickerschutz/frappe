@@ -6,6 +6,8 @@
 import json
 from io import StringIO
 
+from collections import defaultdict
+
 import frappe
 import frappe.permissions
 from frappe import _
@@ -568,22 +570,11 @@ def get_stats(stats, doctype, filters=None):
 				group_by=tag,
 				as_list=True,
 				distinct=1,
+				limit_page_length=10000
 			)
 
 			if tag == "_user_tags":
 				stats[tag] = scrub_user_tags(tag_count)
-				no_tag_count = frappe.get_list(
-					doctype,
-					fields=[tag, "count(*)"],
-					filters=filters + [[tag, "is", "set"]],
-					as_list=True,
-					group_by=tag,
-					order_by=tag,
-				)
-
-				no_tag_count = no_tag_count[0][1] if no_tag_count else 0
-
-				stats[tag].append([_("No Tags"), no_tag_count])
 			else:
 				stats[tag] = tag_count
 
@@ -648,25 +639,18 @@ def get_filter_dashboard_data(stats, doctype, filters=None):
 	return stats
 
 
-def scrub_user_tags(tagcount):
+def scrub_user_tags(tags_counts):
 	"""rebuild tag list for tags"""
-	rdict = {}
-	tagdict = dict(tagcount)
-	for t in tagdict:
-		if not t:
+	out = defaultdict(lambda: 0)
+	tags_counts = dict(tags_counts)
+	for counts in tags_counts:
+		if not counts:
 			continue
-		for tag in json.loads(t):
+		for tag in json.loads(counts):
 			if tag:
-				if tag not in rdict:
-					rdict[tag] = 0
+				out[tag] += tags_counts[counts]
 
-				rdict[tag] += tagdict[t]
-
-	rlist = []
-	for tag in rdict:
-		rlist.append([tag, rdict[tag]])
-
-	return rlist
+	return [(tag, out[tag]) for tag in out]
 
 
 # used in building query in queries.py

@@ -202,7 +202,7 @@ def cleanup_tags():
 		try:
 			records = frappe.db.get_list(doctype, fields=["name", "_user_tags"], filters=[("_user_tags","is", "set")])
 		except Exception:
-			pass
+			continue
 
 		for record in records:
 			if "_user_tags" not in record:

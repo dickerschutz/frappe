@@ -192,3 +192,32 @@ def get_documents_for_tag(tag):
 @frappe.whitelist()
 def get_tags_list_for_awesomebar():
 	return [t.name for t in frappe.get_list("Tag")]
+
+
+
+def cleanup_tags():
+	tags = set(tag["name"] for tag in frappe.db.get_list("Tag"))
+	doctypes = [doctype["name"] for doctype in frappe.db.get_list("DocType")]
+	for doctype in doctypes:
+		try:
+			records = frappe.db.get_list(doctype, fields=["name", "_user_tags"], filters=[("_user_tags","is", "set")])
+		except Exception:
+			pass
+
+		for record in records:
+			if "_user_tags" not in record:
+				continue
+
+			record_tags = record["_user_tags"]
+
+			try:
+				record_tags = json.loads(record_tags)
+			except Exception as ex:
+				record_tags = None
+
+			record_tags = sorted(tag for tag in record_tags if tag in tags)
+			frappe.db.set_value(doctype, record["name"], "_user_tags", json.dumps(record_tags))
+
+
+
+

@@ -640,7 +640,7 @@ def get_filter_dashboard_data(stats, doctype, filters=None):
 
 
 def scrub_user_tags(tags_counts):
-	"""rebuild tag list for tags"""
+	from collections import defaultdict
 	out = defaultdict(lambda: 0)
 	tags_counts = dict(tags_counts)
 	for counts in tags_counts:

@@ -9,7 +9,25 @@ from frappe.utils import unique
 
 
 class Tag(Document):
-	pass
+
+	def after_rename(self, old: str, new: str, merge: bool = False):
+		for doctype, record in _iter_user_tagged_records():
+			record_tags = record["_user_tags"]
+
+			try:
+				record_tags = json.loads(record_tags)
+			except Exception as ex:
+				record_tags = None
+
+			record_tags = list(record_tags)
+			if old  not in record_tags:
+				continue
+
+			record_tags[record_tags.index(old)] = new
+			record_tags = sorted(tag for tag in set(record_tags))
+			frappe.db.set_value(doctype, record["name"], "_user_tags", json.dumps(record_tags))
+
+
 
 
 def check_user_tags(dt):
@@ -195,8 +213,7 @@ def get_tags_list_for_awesomebar():
 
 
 
-def cleanup_tags():
-	tags = set(tag["name"] for tag in frappe.db.get_list("Tag"))
+def _iter_user_tagged_records():
 	doctypes = [doctype["name"] for doctype in frappe.db.get_list("DocType")]
 	for doctype in doctypes:
 		try:
@@ -208,6 +225,12 @@ def cleanup_tags():
 			if "_user_tags" not in record:
 				continue
 
+			yield doctype, record
+
+
+def cleanup_tags():
+	tags = set(tag["name"] for tag in frappe.db.get_list("Tag"))
+	for doctype, record in _iter_user_tagged_records():
 			record_tags = record["_user_tags"]
 
 			try:

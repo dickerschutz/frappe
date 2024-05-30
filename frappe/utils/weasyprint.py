@@ -7,6 +7,27 @@ import frappe
 from PyPDF2 import PdfReader, PdfWriter
 import io
 
+from google.cloud import translate_v2 as translate
+from google.oauth2 import service_account
+
+import json
+import os
+import base64
+
+def get_credentials_from_env():
+    # Get the base64 encoded JSON string from the environment variable
+    base64_credentials = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_BASE64")
+
+    if not base64_credentials:
+        return None
+
+    # Decode the base64 string
+    credentials_json = base64.b64decode(base64_credentials).decode('utf-8')
+
+    # Load the JSON string into a dictionary
+    credentials_dict = json.loads(credentials_json)
+
+    return service_account.Credentials.from_service_account_info(credentials_dict)
 
 @frappe.whitelist()
 def download_pdf(doctype, name, print_format, letterhead=None):
@@ -94,7 +115,24 @@ class PrintFormatGenerator:
 		self.context.css = frappe.render_template(
 			"templates/print_format/print_format.css", self.context
 		)
-		return frappe.render_template("templates/print_format/print_format.html", self.context)
+
+		html_content = frappe.render_template("templates/print_format/print_format.html", self.context)
+		credentials = get_credentials_from_env()
+		if frappe.local.lang not in ("en", "nl") and credentials is not None:
+			try:
+				client = translate.Client(credentials=credentials)
+				target_language = frappe.local.lang
+				translation = client.translate(
+					html_content,
+					target_language=target_language,
+					format_="html"
+				)
+				html_content = translation["translatedText"]
+			except Exception as ex:
+				pass
+
+		return html_content
+
 
 	def get_header_footer_html(self):
 		header_html = footer_html = None

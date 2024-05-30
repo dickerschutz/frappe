@@ -444,7 +444,8 @@ frappe.ui.form.PrintView = class {
 		let params = new URLSearchParams({
 			doctype: this.frm.doc.doctype,
 			name: this.frm.doc.name,
-			print_format: print_format.name
+			print_format: print_format.name,
+			_lang: this.lang_code,
 		});
 		let letterhead = this.get_letterhead();
 		if (letterhead) {
@@ -632,7 +633,8 @@ frappe.ui.form.PrintView = class {
 				doctype: this.frm.doc.doctype,
 				name: this.frm.doc.name,
 				print_format: print_format.name,
-				letterhead: this.get_letterhead()
+				letterhead: this.get_letterhead(),
+				_lang: this.lang_code,
 			});
 			let w = window.open(`/api/method/frappe.utils.weasyprint.download_pdf?${params}`);
 			if (!w) {

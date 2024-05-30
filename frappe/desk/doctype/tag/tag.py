@@ -8,6 +8,7 @@ from frappe.query_builder import DocType
 from frappe.utils import unique
 
 
+
 class Tag(Document):
 
 	def after_rename(self, old: str, new: str, merge: bool = False):

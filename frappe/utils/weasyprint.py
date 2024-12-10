@@ -35,8 +35,13 @@ def download_pdf(doctype, name, print_format, letterhead=None):
 	generator = PrintFormatGenerator(print_format, doc, letterhead)
 	pdf = generator.render_pdf()
 
+	fname = name
+	vehicle = getattr(doc, "vehicle", None)
+	if vehicle:
+		fname = f"{fname}_vin_{vehicle[-4:]}"
+
 	frappe.local.response.filename = "{name}.pdf".format(
-		name=name.replace(" ", "-").replace("/", "-")
+		name=fname.replace(" ", "-").replace("/", "-")
 	)
 	frappe.local.response.filecontent = pdf
 	frappe.local.response.type = "pdf"
